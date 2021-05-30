@@ -13,7 +13,7 @@ import com.noby.mytasks.databinding.ItemTaskBinding
 /**
  * Created by Ahmed Noby Ahmed on 5/21/21.
  */
-class TaskAdapter   : ListAdapter<Task, TaskAdapter.TaskViewHolder>(DiffCallback()) {
+class TaskAdapter(private val listener :onItemClickListener)   : ListAdapter<Task, TaskAdapter.TaskViewHolder>(DiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val binding =  ItemTaskBinding.inflate(LayoutInflater.from(parent.context),parent,false)
@@ -26,7 +26,30 @@ class TaskAdapter   : ListAdapter<Task, TaskAdapter.TaskViewHolder>(DiffCallback
     }
 
 
-    class  TaskViewHolder (private  val binding :ItemTaskBinding) :RecyclerView.ViewHolder(binding.root){
+    inner class  TaskViewHolder (private  val binding :ItemTaskBinding) :RecyclerView.ViewHolder(binding.root){
+        init {
+            binding.apply {
+                root.setOnClickListener {
+                 val position =  adapterPosition
+                    if (position != RecyclerView.NO_POSITION){
+                        val task =  getItem(position)
+                        listener.onItemClick(task)
+                    }
+                }
+                cbCompleted.setOnClickListener {
+                    val position =  adapterPosition
+                    if(position  != RecyclerView.NO_POSITION){
+                        val task =  getItem(position)
+                        listener.onCheckboxClick(task , cbCompleted.isChecked)
+                    }
+                }
+
+
+            }
+
+
+
+        }
       fun bind (task :Task){
           binding.apply {
               cbCompleted.isChecked =  task.completed
@@ -37,6 +60,11 @@ class TaskAdapter   : ListAdapter<Task, TaskAdapter.TaskViewHolder>(DiffCallback
           }
 
       }
+    }
+
+    interface onItemClickListener{
+        fun onItemClick (task :Task)
+        fun onCheckboxClick(taskl:Task ,  isChecked :Boolean)
     }
     class DiffCallback : DiffUtil.ItemCallback<Task>(){
         override fun areItemsTheSame(oldItem: Task, newItem: Task)=
