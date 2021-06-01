@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.edittask.AddEditTaskFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,10 +22,11 @@
         <CheckBox
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/ch_priority"
+            android:id="@+id/ch_important"
             android:text="Important Task"
             />
         <TextView
+            android:id="@+id/txtcreated"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Date Created :"

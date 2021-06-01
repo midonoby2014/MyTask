@@ -1,11 +1,12 @@
 package com.noby.mytasks.ui.tasks
 
+import androidx.hilt.Assisted
 import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.noby.mytasks.data.Task
 import com.noby.mytasks.data.TaskDao
+import com.noby.mytasks.ui.ADD_Task_Result_OK
+import com.noby.mytasks.ui.EDIT_Task_Result_OK
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -19,10 +20,17 @@ import kotlinx.coroutines.launch
 
 
 class TaskViewModel @ViewModelInject constructor(
-    private val taskDao :TaskDao
+    private val taskDao :TaskDao ,
+    @Assisted private val state :SavedStateHandle
 ) :ViewModel() {
+   // this is searchquery without using SavedStateHandle and we will use it to save querysearch
+    // if application is gone or user go another application and back to this application will found
+    // the same searchQuery he left
 
-    val searchQuery = MutableStateFlow("")
+    //val searchQuery = MutableStateFlow("")
+
+    val searchQuery = state.getLiveData("searchQuery","")
+
     val sortOrder =  MutableStateFlow(SortOrder.BY_DATE)
     val hideCompleted =  MutableStateFlow(false)
    private val taskEventChannel =  Channel<TaskEvent>()
@@ -32,7 +40,7 @@ class TaskViewModel @ViewModelInject constructor(
 //        taskDao.getTasks(it)
 //    }
 
-    private val taskflow  = combine(searchQuery,sortOrder,hideCompleted){
+    private val taskflow  = combine(searchQuery.asFlow(),sortOrder,hideCompleted){
         query,sortOrder,hideCompleted ->
         Triple(query,sortOrder,hideCompleted)
     }.flatMapLatest { (query,sortOrder,hideCompleted) ->
@@ -42,9 +50,7 @@ class TaskViewModel @ViewModelInject constructor(
 
 
 
-    fun onTaskSelected(task: Task) {
 
-    }
 
     fun onTasKChekedChanged(task: Task, checked: Boolean) = viewModelScope.launch {
     taskDao.update(task.copy(completed = checked))
@@ -57,10 +63,32 @@ class TaskViewModel @ViewModelInject constructor(
     fun onUndoDeleteClick(task :Task) =  viewModelScope.launch {
         taskDao.insert(task)
     }
+    fun onAddNewTaskClick() =  viewModelScope.launch {
+        taskEventChannel.send(TaskEvent.NavigateToAddTaskScreen)
+    }
+    fun onTaskSelected(task: Task) =  viewModelScope.launch {
+        taskEventChannel.send(TaskEvent.NavigateToEditTaskScreen(task))
+    }
+
+    fun onAddEditResult(result: Int) {
+         when(result){
+             ADD_Task_Result_OK ->  showTaskConfirmationMessage("Task Add")
+
+             EDIT_Task_Result_OK -> showTaskConfirmationMessage("Task Edit")
+
+         }
+    }
+
+    private fun showTaskConfirmationMessage(Message: String) =  viewModelScope.launch {
+        taskEventChannel.send(TaskEvent.ShowTaskSavedConfirmationMessage(Message))
+    }
 
 
     sealed class TaskEvent{
+        object NavigateToAddTaskScreen : TaskEvent()
+        data class NavigateToEditTaskScreen(val  task: Task) :TaskEvent()
         data class  ShowUndoDeleteTaskMessage(val task :Task) :TaskEvent()
+        data class ShowTaskSavedConfirmationMessage(val msg :String) :TaskEvent()
     }
 
 
